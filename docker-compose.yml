@@ -1,0 +1,25 @@
+# Source: https://dev.to/pacheco/how-to-dockerize-a-node-app-and-deploy-to-heroku-3cch
+
+version: "3"
+
+services:
+  mongo:
+    image: mongo
+    restart: always
+    container_name: mongo
+    ports:
+      - 8081:8081
+
+  node-starter:
+    image: node-starter
+    build:
+      context: .
+    container_name: node-starter
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+    env_file:
+      - config/config.env
+      - config/config.prod.env
