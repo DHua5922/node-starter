@@ -1,0 +1,44 @@
+# Source: https://devcenter.heroku.com/articles/container-registry-and-runtime
+
+name: Deploy Back End Production To Heroku
+
+on:
+  push:
+    branches:
+      # Run jobs when updating or creating main branch on GitHub.
+      - main
+    #paths:
+    # Re-run jobs when content changes in specified file or directory.
+    #  - backend/**
+    #  - .github/workflows/production-backend.yml
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: "Docker login"
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: docker login --username=_ --password=$(heroku auth:token) registry.heroku.com
+
+      - name: "Build Docker Image"
+        run: yarn run docker-start
+
+      - name: "Tag docker image"
+        run: docker tag node-starter registry.heroku.com/${{ secrets.HEROKU_PRODUCTION_BACKEND }}/web
+
+      - name: "Push docker image"
+        run: docker push registry.heroku.com/${{ secrets.HEROKU_PRODUCTION_BACKEND }}/web
+
+      - name: Login to Heroku Container registry
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: heroku container:login
+
+      - name: Build and push
+        run: heroku container:push -a ${{ secrets.HEROKU_PRODUCTION_BACKEND }} web
+
+      - name: Release
+        run: heroku container:release -a ${{ secrets.HEROKU_PRODUCTION_BACKEND }} web
